@@ -53,12 +53,12 @@ resource "aws_instance" "example" {
 }
 
 resource "aws_security_group" "allow_tls" {
-  name        = "allow_tls"
+  name        = "sg_terraform_new"
   description = "Allow TLS inbound traffic and all outbound traffic"
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name = "allow_tls"
+    Name = "sg_terraform_new"
   }
 }
 
