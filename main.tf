@@ -1,3 +1,4 @@
+
 terraform {
   required_providers {
     aws = {
@@ -7,15 +8,14 @@ terraform {
   }
 }
 
-# Configure the AWS Provider
 provider "aws" {
   region = "eu-north-1"
 }
 
 variable "instance_type" {
-    description = "instance type of ec2"
-    type = string
-    default = "t3.micro"
+  description = "Instance type of EC2"
+  type        = string
+  default     = "t3.micro"
 }
 
 resource "aws_default_vpc" "default" {
@@ -37,25 +37,13 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 
-  owners = ["099720109477"] # Canonical
-}
-
-resource "aws_instance" "example" {
-  for_each = toset(["servera","serverb","serverc"])
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-  key_name = "new"
-  vpc_security_group_ids = [ aws_security_group.allow_tls.id ]
-
-  tags = {
-    Name = each.key
-  }
+  owners = ["099720109477"]
 }
 
 resource "aws_security_group" "allow_tls" {
   name        = "sg_terraform_new"
-  description = "Allow TLS inbound traffic and all outbound traffic"
-  vpc_id      = aws_vpc.main.id
+  description = "Allow SSH and HTTP inbound traffic"
+  vpc_id      = aws_default_vpc.default.id
 
   tags = {
     Name = "sg_terraform_new"
@@ -81,6 +69,18 @@ resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv4http" {
 resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
   security_group_id = aws_security_group.allow_tls.id
   cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1" # semantically equivalent to all ports
+  ip_protocol       = "-1"
 }
 
+resource "aws_instance" "example" {
+  for_each = toset(["servera", "serverb", "serverc"])
+
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  key_name               = "new"
+  vpc_security_group_ids = [aws_security_group.allow_tls.id]
+
+  tags = {
+    Name = each.key
+  }
+}
